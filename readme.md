@@ -8,7 +8,7 @@ Para ejecutar la tarea hay que correr el comando:
 
 -  python3 main.py  path_to_cyphered_texts.txt
 
-si termina de computar algún disco, debiese guardar el resultado en el archivo:
+a medida que va computando algún disco, debiese guardar el resultado en el archivo:
 
 - discos.txt
 
