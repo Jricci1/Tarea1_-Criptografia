@@ -64,40 +64,65 @@ def try_level(level):
   backtrack(level, disc, alphabet)
 
 def backtrack(level, disc, letters, actual=0):
+  discs_order = []
+  for l in level:
+    discs_order.append(int(l)-1)
+  discs_order.reverse()
+  to_change = False
   if len(letters) > 1:
-    for letter in letters:
+    for index, letter in enumerate(letters):
+      last = enigma.rotors[disc].inv_disc[alphabet_r[letter]]
       discs[disc][actual] = alphabet_r[letter]
-      backtrack(level, disc, letters[:letters.index(letter)] + letters[letters.index(letter)+1:], actual+1)
-    return
+      if type(to_change) != type(True):
+        if to_change[0] == actual:
+          discs[disc][last] = alphabet_r[letters[index-1]]
+          enigma.set_rotor(discs[disc], disc)
+          c = enigma.cipher_letter(to_change[1], to_change[2], discs_order)
+          if c != to_change[3] and to_change[4]:
+            if letter != letters[-1]:
+              continue
+            else: 
+              return False
+
+      to_change = backtrack(level, disc, letters[:letters.index(letter)] + letters[letters.index(letter)+1:], actual+1)
+      if type(to_change) != type(True) and actual > to_change[0]:
+        return to_change
+    return False
   discs[disc][actual] = alphabet_r[letters[0]]
-  print(discs[disc], disc)
   enigma.set_rotor(discs[disc], disc)
   to_change = test_configuration(level)
-  if to_change == True:
-    discs_order = []
-    for l in level:
-      discs_order.append(int(l)-1)
-    discs_order.reverse()
-    plain = "hola ha sido muy grato poder encriptar esta cuestion, aunque no estoy muy seguro que funcione"
-    print("antes de encriptar:", plain)
-    # enigma = Enigma(reflector, discos_ejemplo)
-    cipher = enigma.cipher_text(plain, discs_order)
-    print("texto cifrado:", cipher)
-    plain2 = enigma.cipher_text(cipher, discs_order)
-    print("después de desencriptar:", plain2)
-    exit()
-  return
+  return to_change
 
 def test_configuration(level):
   discs = []
   for l in level:
     discs.append(int(l)-1)
-  discs.reverse() ## ?????????? esta bien el reverse?
+  discs.reverse()
+  count = 0
   for plain, cipher in parser.levels_dic[tuple(level)]:
+    f= open("./discos.txt","w+")
+    for disco in enigma.rotors:
+     f.write(str(disco.disc))
+     f.write('\n')
+    f.close()
+    count +=1
     for index, letter in enumerate((plain)):
       c = enigma.cipher_letter(letter, index, discs) 
       if c != cipher[index]:
-        return False
+        let = enigma.rotors[discs[0]].encrypt_forward(alphabet_r[letter], index)
+        disc = discs.pop()
+        for i in discs:
+          let = enigma.rotors[discs[i]].encrypt_forward(alphabet_r[letter], index)
+        let = enigma.reflect(let)
+        for i in reversed(discs):
+          let = enigma.rotors[discs[i]].encrypt_backwards(alphabet_r[letter], index)
+        let = enigma.rotors[disc].inv_disc[let]
+        boolean = False
+        if let >= alphabet_r[cipher[index]]:
+          boolean = True
+        let = min(let, alphabet_r[cipher[index]])
+        to_change = max(alphabet_r[letter], let)
+        return to_change, letter, index, cipher[index], boolean
   return True
 
   
@@ -106,11 +131,9 @@ def test_configuration(level):
 
 
 def main():
-  print(parser.levels[0])
   try_level(parser.levels[0])
-  # print(parser.levels_dic[tuple(['1'])])
 
 
-# if __name__ == '__main__':
-main()
+if __name__ == '__main__':
+  main()
     
